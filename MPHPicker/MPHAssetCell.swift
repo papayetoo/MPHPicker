@@ -13,6 +13,8 @@ class MPHAssetCell: UITableViewCell {
     
     let thumbnailImageView: UIImageView = {
         let imageView = UIImageView()
+        imageView.layer.cornerRadius = 3
+        imageView.clipsToBounds = true
         imageView.translatesAutoresizingMaskIntoConstraints = false
         return imageView
     }()

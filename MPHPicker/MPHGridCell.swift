@@ -18,10 +18,10 @@ open class MPHGridCell: UICollectionViewCell {
     private let imageView = UIImageView()
     let circleButton: UIButton = { rect in
         let button = UIButton(frame: rect)
-        button.layer.borderColor = MPHManager.MPHGridCircleConfiguration.borderColor.cgColor
-        button.layer.borderWidth = MPHManager.MPHGridCircleConfiguration.borderWidth
+        button.layer.borderColor = MPHManager.Config.borderColor.cgColor
+        button.layer.borderWidth = MPHManager.Config.borderWidth
         button.layer.cornerRadius = rect.width / 2
-        button.backgroundColor = MPHManager.MPHGridCircleConfiguration.backgroundColor
+        button.backgroundColor = MPHManager.Config.backgroundColor
         
         button.setTitleColor(.white, for: .selected)
         return button
@@ -36,10 +36,10 @@ open class MPHGridCell: UICollectionViewCell {
             guard let assetIdentifier = assetIdentifier,
                   let index = MPHManager.shared.selected.firstIndex(where: {$0 == assetIdentifier}) else {return}
             self.circleButton.isSelected = true
-            self.imageView.layer.borderWidth = MPHManager.MPHGridCircleConfiguration.borderWidth
-            self.imageView.layer.borderColor = MPHManager.MPHGridCircleConfiguration.selectedBackground.cgColor
+            self.imageView.layer.borderWidth = MPHManager.Config.borderWidth
+            self.imageView.layer.borderColor = MPHManager.Config.selectedColor.cgColor
             self.opaqueView.isHidden = false
-            self.circleButton.backgroundColor = MPHManager.MPHGridCircleConfiguration.selectedBackground
+            self.circleButton.backgroundColor = MPHManager.Config.selectedColor
             self.circleButton.setTitle("\(index + 1)", for: .selected)
         }
     }
@@ -62,27 +62,16 @@ open class MPHGridCell: UICollectionViewCell {
         self.contentView.addSubview(self.circleButton)
         
         self.circleButton.addTarget(self, action: #selector(changeSelectedAssets), for: .touchUpInside )
-        
-//        self.selectionObserver = self.circleButton.observe(\.isSelected, options: [.old, .new]) {[weak self] (button, change) in
-//            guard let `self` = self,
-//                  let newValue = change.newValue,
-//                  let assetIdentifier = self.assetIdentifier else {return}
-//
-//            self.opaqueView.isHidden = !newValue
-//            self.circleButton.backgroundColor = newValue ? MPHManager.MPHGridCircleConfiguration.selectedBackground : MPHManager.MPHGridCircleConfiguration.backgroundColor
-//            self.imageView.layer.borderWidth = newValue ? 2 : 0
-//            self.imageView.layer.borderColor = newValue ? MPHManager.MPHGridCircleConfiguration.selectedBackground.cgColor : UIColor.clear.cgColor
-//        }
-        
         self.selectedObserver = MPHManager.shared.observe(\.selected, options: [.old, .new], changeHandler: {[weak self] (_, change) in
             guard let `self` = self,
                   let newSelected = change.newValue,
                   let assetIdentifier = self.assetIdentifier else {return}
             let assetIsSelected = MPHManager.shared.selected.contains(assetIdentifier)
             self.opaqueView.isHidden = !assetIsSelected
-            self.circleButton.backgroundColor = assetIsSelected ? MPHManager.MPHGridCircleConfiguration.selectedBackground : MPHManager.MPHGridCircleConfiguration.backgroundColor
+            self.circleButton.backgroundColor = assetIsSelected ? MPHManager.Config.selectedColor : MPHManager.Config.backgroundColor
+            self.circleButton.layer.borderColor = assetIsSelected ? MPHManager.Config.selectedColor.cgColor : MPHManager.Config.borderColor.cgColor
             self.imageView.layer.borderWidth = assetIsSelected ? 2 : 0
-            self.imageView.layer.borderColor = assetIsSelected ? MPHManager.MPHGridCircleConfiguration.selectedBackground.cgColor : UIColor.clear.cgColor
+            self.imageView.layer.borderColor = assetIsSelected ? MPHManager.Config.selectedColor.cgColor : UIColor.clear.cgColor
             self.circleButton.isSelected = assetIsSelected
             guard let index = newSelected.firstIndex(where: {$0 == assetIdentifier}) else {return}
             self.circleButton.setTitle("\(index + 1)", for: .selected)
@@ -99,10 +88,12 @@ open class MPHGridCell: UICollectionViewCell {
     
     public override func prepareForReuse() {
         super.prepareForReuse()
+        self.assetIdentifier = nil
         self.imageView.image = nil
         self.imageView.layer.borderColor = UIColor.clear.cgColor
         self.imageView.layer.borderWidth = 0
-        self.circleButton.backgroundColor = MPHManager.MPHGridCircleConfiguration.backgroundColor
+        self.circleButton.backgroundColor = MPHManager.Config.backgroundColor
+        self.circleButton.layer.borderColor = MPHManager.Config.borderColor.cgColor
         self.opaqueView.isHidden = true
         self.circleButton.isSelected = false
     }
@@ -124,7 +115,7 @@ open class MPHGridCell: UICollectionViewCell {
             return
         }
         if !MPHManager.shared.selected.contains(assetIdentifier) {
-            if MPHManager.shared.selected.count >= MPHManager.MPHGridCircleConfiguration.maxImage {
+            if MPHManager.shared.selected.count >= MPHManager.Config.maxImage {
                 MPHManager.shared.delegate?.didFillUpImageAssets()
                 return
             }

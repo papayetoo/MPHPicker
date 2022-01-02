@@ -17,6 +17,7 @@
 		8241A31C27740CBC00A7F9A1 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8241A31B27740CBC00A7F9A1 /* Assets.xcassets */; };
 		8241A3202774139A00A7F9A1 /* ImageProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8241A31F2774139A00A7F9A1 /* ImageProvider.swift */; };
 		8241A32227742E3A00A7F9A1 /* MPHAssetCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8241A32127742E3A00A7F9A1 /* MPHAssetCell.swift */; };
+		82C7FEC7277581E40039A1A3 /* UICollectionView+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82C7FEC6277581E40039A1A3 /* UICollectionView+Extension.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -31,6 +32,7 @@
 		8241A31B27740CBC00A7F9A1 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		8241A31F2774139A00A7F9A1 /* ImageProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageProvider.swift; sourceTree = "<group>"; };
 		8241A32127742E3A00A7F9A1 /* MPHAssetCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MPHAssetCell.swift; sourceTree = "<group>"; };
+		82C7FEC6277581E40039A1A3 /* UICollectionView+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UICollectionView+Extension.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -66,6 +68,7 @@
 				007C188A27735098007BB1B3 /* MPHPicker.h */,
 				007C188B27735098007BB1B3 /* MPHPicker.docc */,
 				007C1893277350AF007BB1B3 /* MPHGridCell.swift */,
+				82C7FEC6277581E40039A1A3 /* UICollectionView+Extension.swift */,
 				007C189727735140007BB1B3 /* ImageGridViewController.swift */,
 				007C18A4277358CA007BB1B3 /* UIImage+Extension.swift */,
 				8241A31B27740CBC00A7F9A1 /* Assets.xcassets */,
@@ -160,6 +163,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				82C7FEC7277581E40039A1A3 /* UICollectionView+Extension.swift in Sources */,
 				007C189827735140007BB1B3 /* ImageGridViewController.swift in Sources */,
 				007C188C27735098007BB1B3 /* MPHPicker.docc in Sources */,
 				8241A32227742E3A00A7F9A1 /* MPHAssetCell.swift in Sources */,

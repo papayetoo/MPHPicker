@@ -30,8 +30,18 @@ open class MPHNavigationController: UINavigationController {
     
     private lazy var leftBackButton = UIBarButtonItem(title: "뒤로", style: .plain, target: self, action: #selector(didTouchBackButton))
     
-    private lazy var imageCountBarButtonItem = UIBarButtonItem(title: "0", style: .plain, target: nil, action: nil)
-    private lazy var uploadBarButtonItem = UIBarButtonItem(title: "올리기", style: .plain, target: self, action: #selector(didTouchUploadButton))
+    public var leftBackImage: UIImage? {
+        didSet {
+            self.leftBackButton.title = ""
+            self.leftBackButton.image = leftBackImage
+        }
+    }
+    
+    private lazy var imageCountButton = UIBarButtonItem(title: "0", style: .plain, target: nil, action: nil)
+    private lazy var uploadButton = UIBarButtonItem(title: "올리기", style: .plain, target: self, action: #selector(didTouchUploadButton))
+    
+    private var imageGridViewController: ImageGridViewController?
+
     
     weak var mphNavigationDelegate: MPHNavigationDelegate?
     public weak var mphUploadDelegate: MPHUploadDelegate?
@@ -46,6 +56,8 @@ open class MPHNavigationController: UINavigationController {
     
     private var assetsListBarButtonTouchObserver: NSKeyValueObservation?
     private var selectedObserver: NSKeyValueObservation?
+    
+    @objc dynamic private var isAssetsCollectionBarButtonTouched: Bool = false
     
     private lazy var assetsListView: UITableView = {
         let tableView = UITableView()
@@ -65,7 +77,13 @@ open class MPHNavigationController: UINavigationController {
         
         self.selectedObserver = MPHManager.shared.observe(\.selected, options: [.old, .new]) {[weak self](_, change) in
             guard let `self` = self, let newValue = change.newValue else {return}
-            self.imageCountBarButtonItem.title = "\(newValue.count)"
+            self.imageCountButton.title = "\(newValue.count)"
+        }
+        
+        self.assetsListBarButtonTouchObserver = self.observe(\.isAssetsCollectionBarButtonTouched, options: .new) {[weak self] (_, change) in
+            guard let `self` = self, let newValue = change.newValue else {return}
+            dump("isAssetsCollectionBarButton Touched: \(newValue)")
+            newValue ? self.willShowAssetsCollectionList() : self.willHideAssetsCollectionList()
         }
     }
     
@@ -80,6 +98,7 @@ open class MPHNavigationController: UINavigationController {
         let gridVC = ImageGridViewController()
         self.init(rootViewController: gridVC)
         self.mphNavigationDelegate = gridVC
+        self.imageGridViewController = gridVC
     }
 
     public override func viewDidLoad() {
@@ -91,22 +110,47 @@ open class MPHNavigationController: UINavigationController {
         self.navigationBar.tintColor = .black
         self.navigationBar.backgroundColor = .white
         self.navigationBar.topItem?.leftBarButtonItems = [leftBackButton, assetsListBarButtonItem]
-        imageCountBarButtonItem.setTitleTextAttributes([.foregroundColor:UIColor.systemBlue], for: .normal)
-        self.navigationBar.topItem?.rightBarButtonItems = [uploadBarButtonItem, imageCountBarButtonItem ]
+        imageCountButton.setTitleTextAttributes([.foregroundColor:UIColor.systemBlue], for: .normal)
+        self.navigationBar.topItem?.rightBarButtonItems = [uploadButton, imageCountButton ]
     }
     
     deinit {
         PHPhotoLibrary.shared().unregisterChangeObserver(self)
+        self.assetsListBarButtonTouchObserver?.invalidate()
         self.selectedObserver?.invalidate()
     }
     
     
 }
 
+// MARK: - Utility functions
+extension MPHNavigationController {
+    @discardableResult
+    public func setMPHUploadDelegete(_ delegate: MPHUploadDelegate) -> MPHNavigationController {
+        self.mphUploadDelegate = delegate
+        return self
+    }
+    
+    @discardableResult
+    public func setLeftBackButton(as otherImage: UIImage?) -> MPHNavigationController {
+        self.leftBackButton.title = nil
+        self.leftBackButton.image = otherImage
+        return self
+    }
+    
+    @discardableResult
+    public func setImageGridViewDelegate(_ delegate: ImageGridViewDelegate) -> MPHNavigationController {
+        self.imageGridViewController?.delegate = delegate
+        return self
+    }
+    
+}
+
+// MARK: - Handle Events
 extension MPHNavigationController {
     @objc
     private func didTouchBackButton(_ sender: UIButton) {
-        MPHManager.shared.selected.removeAll()
+        MPHManager.shared.reset()
         self.dismiss(animated: true, completion: nil)
     }
     
@@ -119,6 +163,10 @@ extension MPHNavigationController {
     
     @objc
     private func didTouchAssetsListBarButton(_ sender: AnyObject) {
+        self.isAssetsCollectionBarButtonTouched.toggle()
+    }
+    
+    private func willShowAssetsCollectionList() {
         guard let topView = self.topViewController?.view else {
             return
         }
@@ -130,8 +178,13 @@ extension MPHNavigationController {
             self.assetsListView.trailingAnchor.constraint(equalTo: topView.safeAreaLayoutGuide.trailingAnchor),
         ])
     }
+    
+    private func willHideAssetsCollectionList() {
+        self.assetsListView.removeFromSuperview()
+    }
 }
 
+// MARK: - PhotoLibraryChangeObserver
 extension MPHNavigationController: PHPhotoLibraryChangeObserver {
     public func photoLibraryDidChange(_ changeInstance: PHChange) {
         DispatchQueue.main.async {
@@ -146,6 +199,7 @@ extension MPHNavigationController: PHPhotoLibraryChangeObserver {
     }
 }
 
+// MARK: - UITableViewDataSource, UITableViewDelegate
 extension MPHNavigationController: UITableViewDataSource, UITableViewDelegate {
     public func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return self.userCollections.count + 1
@@ -187,7 +241,7 @@ extension MPHNavigationController: UITableViewDataSource, UITableViewDelegate {
     
     public func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         defer {
-            MPHManager.shared.selected.removeAll()
+//            MPHManager.shared.selected.removeAll()
             DispatchQueue.main.async {
                 self.assetsListView.removeFromSuperview()
             }
@@ -202,7 +256,7 @@ extension MPHNavigationController: UITableViewDataSource, UITableViewDelegate {
         case 1...:
             guard let collection = self.userCollections.object(at: row - 1) as? PHAssetCollection else {return}
             title = collection.localizedTitle
-            changedAsset = PHAsset.fetchKeyAssets(in: collection, options: fetchingOptions)
+            changedAsset = PHAsset.fetchAssets(in: collection, options: fetchingOptions)
         default:
             title = ""
         }
@@ -214,3 +268,4 @@ extension MPHNavigationController: UITableViewDataSource, UITableViewDelegate {
         return 70
     }
 }
+

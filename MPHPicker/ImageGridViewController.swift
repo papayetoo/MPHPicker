@@ -8,7 +8,7 @@
 import UIKit
 import Photos
 
-protocol ImageGridViewDelegate: NSObject {
+public protocol ImageGridViewDelegate: NSObject {
     func didFillUpAssets()
 }
 
@@ -17,23 +17,28 @@ open class ImageGridViewController: UIViewController {
     private let imageGridCollectionView: UICollectionView = {
         let layout = UICollectionViewFlowLayout()
         let collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
+        collectionView.backgroundColor = .white
         return collectionView
     }()
     
-    private var fetchingAssets: PHFetchResult<PHAsset>? {
+    private var fetchingAssets: PHFetchResult<PHAsset>! {
         didSet {
-            self.imageGridCollectionView.reloadData()
+            DispatchQueue.main.async {
+                self.imageGridCollectionView.reloadData()
+            }
         }
     }
     
     private let imageManager = PHCachingImageManager()
+    private var previousPreaheatRect = CGRect.zero
     
-    weak var delegate: ImageGridViewDelegate?
+    public weak var delegate: ImageGridViewDelegate?
 
     public override func viewDidLoad() {
         super.viewDidLoad()
-        
-        self.fetchingAssets = PHAsset.fetchAssets(with: nil)
+        let options = PHFetchOptions()
+        options.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: true)]
+        self.fetchingAssets = PHAsset.fetchAssets(with: options)
         PHPhotoLibrary.shared().register(self)
         
         self.view.addSubview(self.imageGridCollectionView)
@@ -56,13 +61,71 @@ open class ImageGridViewController: UIViewController {
 
 extension ImageGridViewController: PHPhotoLibraryChangeObserver {
     public func photoLibraryDidChange(_ changeInstance: PHChange) {
-        
-        let fetchOptions = PHFetchOptions()
-        fetchOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
-        let oldPhotos = PHAsset.fetchAssets(with: fetchOptions)
-        if let changeDetail = changeInstance.changeDetails(for: oldPhotos) {
+        if let changeDetail = changeInstance.changeDetails(for: self.fetchingAssets) {
             self.fetchingAssets = changeDetail.fetchResultAfterChanges
         }
+    }
+    
+    fileprivate func updateCachedAssets() {
+        guard isViewLoaded && view.window != nil else {return}
+        
+        let visibleRect = CGRect(origin: self.imageGridCollectionView.contentOffset,
+                                 size: self.imageGridCollectionView.bounds.size)
+        let preaheatRect = visibleRect.insetBy(dx: 0, dy: -5 * visibleRect.height)
+        let delta = abs(preaheatRect.midY - self.previousPreaheatRect.midY)
+        guard delta > view.bounds.height / 5 else {return}
+        
+        let (addedRects, removedRects) = self.differencesBetweenRects(self.previousPreaheatRect, preaheatRect)
+        let addAssets = addedRects
+            .flatMap {rect in imageGridCollectionView.indexPathsForElements(in: rect)}
+            .map {indexPath in fetchingAssets.object(at: indexPath.item)}
+        let removeAssets = removedRects
+            .flatMap {rect in imageGridCollectionView.indexPathsForElements(in: rect)}
+            .map {indexPath in fetchingAssets.object(at: indexPath.item)}
+        
+        let width = self.view.frame.width / 3 - 2
+        let scale = UIScreen.main.scale
+        let size = CGSize(width: width * scale, height: width * scale)
+        DispatchQueue.global().async {
+            self.imageManager.startCachingImages(for: addAssets, targetSize: size, contentMode: .aspectFill, options: nil)
+            self.imageManager.stopCachingImages(for: removeAssets, targetSize: size, contentMode: .aspectFill, options: nil)
+        }
+        
+        self.previousPreaheatRect = preaheatRect
+    }
+    
+    fileprivate func differencesBetweenRects(_ old: CGRect, _ new: CGRect) -> (added: [CGRect], removed: [CGRect]) {
+        if old.intersects(new) {
+            var added = [CGRect]()
+            if new.maxY > old.maxY {
+                added += [CGRect(x: new.origin.x, y: new.origin.y,
+                                 width: new.width, height: new.maxY - old.maxY)]
+            }
+            if old.minY > new.minY {
+                added += [CGRect(x: new.origin.x, y: new.origin.y,
+                                 width: new.width, height: old.minY - new.minY)]
+            }
+            var removed = [CGRect]()
+            if new.maxY < old.maxY {
+                removed += [CGRect(x: new.origin.x, y: new.origin.y,
+                                 width: new.width, height: old.maxY - new.maxY)]
+            }
+            if old.minY < new.minY {
+                removed += [CGRect(x: new.origin.x, y: new.origin.y,
+                                 width: new.width, height: new.minY - old.minY)]
+            }
+            return (added, removed)
+        } else {
+            return ([new], [old])
+        }
+    }
+}
+
+extension ImageGridViewController {
+    @discardableResult
+    public func setImageGridViewDelegate(_ delegate: ImageGridViewDelegate?) -> ImageGridViewController{
+        self.delegate = delegate
+        return self
     }
 }
 
@@ -83,15 +146,16 @@ extension ImageGridViewController: UICollectionViewDataSource, UICollectionViewD
         let scale = UIScreen.main.scale
         let size = CGSize(width: width * scale, height: width * scale)
         cell.assetIdentifier = asset.localIdentifier
-        self.imageManager.requestImage(for: asset, targetSize: size, contentMode: .aspectFill, options: nil, resultHandler: {(imageOrNil, _) in
-            guard let image = imageOrNil else {
-                return
-            }
-            DispatchQueue.main.async {
-                cell.setImage(as: image)
-            }
-        })
-        
+        DispatchQueue.global().async {[weak self] in
+            self?.imageManager.requestImage(for: asset, targetSize: size, contentMode: .aspectFill, options: nil, resultHandler: {(imageOrNil, _) in
+                guard let image = imageOrNil, cell.assetIdentifier == asset.localIdentifier else {
+                    return
+                }
+                DispatchQueue.main.async {
+                    cell.setImage(as: image)
+                }
+            })
+        }
         return cell
     }
     
@@ -113,7 +177,17 @@ extension ImageGridViewController: UICollectionViewDataSource, UICollectionViewD
     }
     
     public func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        guard let cell = collectionView.cellForItem(at: indexPath) as? MPHGridCell else {return}
+        
+        guard  MPHManager.shared.selectedImageAssets.count < MPHManager.Config.maxImage,
+               let cell = collectionView.cellForItem(at: indexPath) as? MPHGridCell else {
+                   dump("이미지를 더 이상 추가할 수 없습니다.")
+                   self.delegate?.didFillUpAssets()
+                   return
+               }
         cell.changeSelectedAssets()
+    }
+    
+    public func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        self.updateCachedAssets()
     }
 }
