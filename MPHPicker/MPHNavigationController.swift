@@ -21,7 +21,7 @@ open class MPHNavigationController: UINavigationController {
     private let backButton = UIButton()
     
     private var allPhotos: PHFetchResult<PHAsset>!
-    private var userCollections: PHFetchResult<PHCollection>!
+    private var userCollections: PHFetchResult<PHAssetCollection>!
     
     private lazy var assetsListBarButtonItem: UIBarButtonItem = {
         let barButtonItem = UIBarButtonItem(title: "모든 사진", style: .plain, target: self, action: #selector(didTouchAssetsListBarButton))
@@ -42,13 +42,20 @@ open class MPHNavigationController: UINavigationController {
     
     private var imageGridViewController: ImageGridViewController?
 
+    private var defaultImage = UIImage()
     
     weak var mphNavigationDelegate: MPHNavigationDelegate?
     public weak var mphUploadDelegate: MPHUploadDelegate?
     
-    private var fetchingOptions: PHFetchOptions = {
+    private var creationDateOptions: PHFetchOptions = {
         let options = PHFetchOptions()
-        options.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: true)]
+        options.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
+        return options
+    }()
+    
+    private var assetCountOptions: PHFetchOptions = {
+        let options = PHFetchOptions()
+        options.predicate = NSPredicate(format: "estimatedAssetCount > 0")
         return options
     }()
     
@@ -71,8 +78,8 @@ open class MPHNavigationController: UINavigationController {
     public override init(rootViewController: UIViewController) {
         super.init(rootViewController: rootViewController)
         
-        self.allPhotos = PHAsset.fetchAssets(with: self.fetchingOptions)
-        self.userCollections = PHCollection.fetchTopLevelUserCollections(with: nil)
+        self.allPhotos = PHAsset.fetchAssets(with: self.creationDateOptions)
+        self.userCollections = PHAssetCollection.fetchAssetCollections(with: .album, subtype: .smartAlbumUserLibrary, options: self.assetCountOptions)
         PHPhotoLibrary.shared().register(self)
         
         self.selectedObserver = MPHManager.shared.observe(\.selected, options: [.old, .new]) {[weak self](_, change) in
@@ -82,16 +89,32 @@ open class MPHNavigationController: UINavigationController {
         
         self.assetsListBarButtonTouchObserver = self.observe(\.isAssetsCollectionBarButtonTouched, options: .new) {[weak self] (_, change) in
             guard let `self` = self, let newValue = change.newValue else {return}
-            dump("isAssetsCollectionBarButton Touched: \(newValue)")
             newValue ? self.willShowAssetsCollectionList() : self.willHideAssetsCollectionList()
         }
     }
     
     public required init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
-        self.allPhotos = PHAsset.fetchAssets(with: self.fetchingOptions)
-        self.userCollections = PHCollection.fetchTopLevelUserCollections(with: nil)
+        self.allPhotos = PHAsset.fetchAssets(with: self.creationDateOptions)
         PHPhotoLibrary.shared().register(self)
+    }
+   
+   
+    public override init(nibName: String?, bundle: Bundle?) {
+        super.init(nibName: nibName, bundle: bundle)
+        self.allPhotos = PHAsset.fetchAssets(with: self.creationDateOptions)
+        self.userCollections = PHAssetCollection.fetchAssetCollections(with: .album, subtype: .smartAlbumUserLibrary, options: self.assetCountOptions)
+        PHPhotoLibrary.shared().register(self)
+        
+        self.selectedObserver = MPHManager.shared.observe(\.selected, options: [.old, .new]) {[weak self](_, change) in
+            guard let `self` = self, let newValue = change.newValue else {return}
+            self.imageCountButton.title = "\(newValue.count)"
+        }
+        
+        self.assetsListBarButtonTouchObserver = self.observe(\.isAssetsCollectionBarButtonTouched, options: .new) {[weak self] (_, change) in
+            guard let `self` = self, let newValue = change.newValue else {return}
+            newValue ? self.willShowAssetsCollectionList() : self.willHideAssetsCollectionList()
+        }
     }
     
     public convenience init() {
@@ -108,9 +131,10 @@ open class MPHNavigationController: UINavigationController {
     public override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         self.navigationBar.tintColor = .black
+        self.navigationBar.barTintColor = .white
         self.navigationBar.backgroundColor = .white
         self.navigationBar.topItem?.leftBarButtonItems = [leftBackButton, assetsListBarButtonItem]
-        imageCountButton.setTitleTextAttributes([.foregroundColor:UIColor.systemBlue], for: .normal)
+        self.imageCountButton.setTitleTextAttributes([.foregroundColor:UIColor.systemBlue], for: .normal)
         self.navigationBar.topItem?.rightBarButtonItems = [uploadButton, imageCountButton ]
     }
     
@@ -144,6 +168,15 @@ extension MPHNavigationController {
         return self
     }
     
+    
+    @discardableResult
+    public func setDefaultImage(as image: UIImage?) -> MPHNavigationController {
+        guard let image = image else {
+            return self
+        }
+        self.defaultImage = image
+        return self
+    }
 }
 
 // MARK: - Handle Events
@@ -211,20 +244,22 @@ extension MPHNavigationController: UITableViewDataSource, UITableViewDelegate {
         var firstImageAsset: PHAsset?
         switch row {
         case 0:
-            cell.collectionTitleLabel.text = "모든 사진"
-            firstImageAsset = self.allPhotos.object(at: 0)
+            cell.collectionTitleLabel.text = String(format: "모든 사진 (%d)", self.allPhotos.count)
+            firstImageAsset = self.allPhotos.count > 0 ? self.allPhotos.object(at: 0) : nil
         case 1...:
-            guard let collection = self.userCollections.object(at: row - 1) as? PHAssetCollection else {return UITableViewCell()}
-            cell.collectionTitleLabel.text = collection.localizedTitle
-            let collectionAssets = PHAsset.fetchAssets(in: collection, options: fetchingOptions)
-            if collectionAssets.count <= 0 {break}
-            firstImageAsset = collectionAssets.object(at: 0)
+            guard row - 1 >= 0 else {return UITableViewCell()}
+            let collection = self.userCollections.object(at: row - 1)
+            let collectionAssets = PHAsset.fetchAssets(in: collection, options: creationDateOptions)
+            if collectionAssets.count <= 0 {return UITableViewCell()}
+            cell.collectionTitleLabel.text = String(format: "\(collection.localizedTitle ?? "") (%d)", collectionAssets.count)
+            firstImageAsset = collectionAssets.count > 0 ? collectionAssets.object(at: 0) : nil
         default:
             break
         }
         let scale = UIScreen.main.scale
         let size = CGSize(width: 50 * scale, height: 50 * scale)
         guard let firstImageAsset = firstImageAsset else {
+            cell.thumbnailImageView.image = self.defaultImage
             return cell
         }
         self.imageManager.requestImage(for: firstImageAsset,
@@ -241,7 +276,6 @@ extension MPHNavigationController: UITableViewDataSource, UITableViewDelegate {
     
     public func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         defer {
-//            MPHManager.shared.selected.removeAll()
             DispatchQueue.main.async {
                 self.assetsListView.removeFromSuperview()
             }
@@ -252,11 +286,11 @@ extension MPHNavigationController: UITableViewDataSource, UITableViewDelegate {
         switch row {
         case 0:
             title = "모든 사진"
-            changedAsset = allPhotos
+            changedAsset = PHAsset.fetchAssets(with: self.creationDateOptions)
         case 1...:
-            guard let collection = self.userCollections.object(at: row - 1) as? PHAssetCollection else {return}
+            let collection = self.userCollections.object(at: row - 1)
             title = collection.localizedTitle
-            changedAsset = PHAsset.fetchAssets(in: collection, options: fetchingOptions)
+            changedAsset = PHAsset.fetchAssets(in: collection, options: creationDateOptions)
         default:
             title = ""
         }

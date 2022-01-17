@@ -105,7 +105,6 @@ open class MPHGridCell: UICollectionViewCell {
     
     func setImage(as image: UIImage) {
         self.imageView.image = image
-//        self.imageView.contentMode = .scaleAspectFill
         self.imageView.clipsToBounds = true
     }
     

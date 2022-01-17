@@ -37,7 +37,7 @@ open class ImageGridViewController: UIViewController {
     public override func viewDidLoad() {
         super.viewDidLoad()
         let options = PHFetchOptions()
-        options.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: true)]
+        options.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
         self.fetchingAssets = PHAsset.fetchAssets(with: options)
         PHPhotoLibrary.shared().register(self)
         
@@ -178,13 +178,23 @@ extension ImageGridViewController: UICollectionViewDataSource, UICollectionViewD
     
     public func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         
-        guard  MPHManager.shared.selectedImageAssets.count < MPHManager.Config.maxImage,
-               let cell = collectionView.cellForItem(at: indexPath) as? MPHGridCell else {
-                   dump("이미지를 더 이상 추가할 수 없습니다.")
-                   self.delegate?.didFillUpAssets()
-                   return
-               }
-        cell.changeSelectedAssets()
+        guard let cell = collectionView.cellForItem(at: indexPath) as? MPHGridCell,
+              let assetIdentifer = cell.assetIdentifier else {
+            return
+        }
+        
+        // assetIdentifier를 가지고 있을 때는
+        guard !MPHManager.shared.selected.contains(assetIdentifer) else {
+            cell.changeSelectedAssets()
+            return
+        }
+        
+        // 최대 선택보다 작을 때는
+        guard MPHManager.shared.selectedImageAssets.count >= MPHManager.Config.maxImage else {
+            cell.changeSelectedAssets()
+            return
+        }
+        self.delegate?.didFillUpAssets()
     }
     
     public func scrollViewDidScroll(_ scrollView: UIScrollView) {
