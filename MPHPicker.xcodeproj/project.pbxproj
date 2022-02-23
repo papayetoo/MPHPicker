@@ -10,11 +10,12 @@
 		007C188C27735098007BB1B3 /* MPHPicker.docc in Sources */ = {isa = PBXBuildFile; fileRef = 007C188B27735098007BB1B3 /* MPHPicker.docc */; };
 		007C188D27735098007BB1B3 /* MPHPicker.h in Headers */ = {isa = PBXBuildFile; fileRef = 007C188A27735098007BB1B3 /* MPHPicker.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		007C1894277350AF007BB1B3 /* MPHGridCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 007C1893277350AF007BB1B3 /* MPHGridCell.swift */; };
-		007C189827735140007BB1B3 /* ImageGridViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 007C189727735140007BB1B3 /* ImageGridViewController.swift */; };
+		007C189827735140007BB1B3 /* MPHGridViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 007C189727735140007BB1B3 /* MPHGridViewController.swift */; };
 		007C18A5277358CA007BB1B3 /* UIImage+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 007C18A4277358CA007BB1B3 /* UIImage+Extension.swift */; };
 		8241A3162773F87700A7F9A1 /* MPHManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8241A3152773F87700A7F9A1 /* MPHManager.swift */; };
 		8241A3182773FCEF00A7F9A1 /* MPHNavigationController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8241A3172773FCEF00A7F9A1 /* MPHNavigationController.swift */; };
 		8241A32227742E3A00A7F9A1 /* MPHAssetCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8241A32127742E3A00A7F9A1 /* MPHAssetCell.swift */; };
+		824FF8F127C5E04B00FEFD34 /* ImageViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 824FF8F027C5E04B00FEFD34 /* ImageViewController.swift */; };
 		827939472794F1830023D27C /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 827939462794F1830023D27C /* AppDelegate.swift */; };
 		827939492794F1830023D27C /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 827939482794F1830023D27C /* SceneDelegate.swift */; };
 		8279394B2794F1830023D27C /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8279394A2794F1830023D27C /* ViewController.swift */; };
@@ -54,11 +55,12 @@
 		007C188A27735098007BB1B3 /* MPHPicker.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MPHPicker.h; sourceTree = "<group>"; };
 		007C188B27735098007BB1B3 /* MPHPicker.docc */ = {isa = PBXFileReference; lastKnownFileType = folder.documentationcatalog; path = MPHPicker.docc; sourceTree = "<group>"; };
 		007C1893277350AF007BB1B3 /* MPHGridCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MPHGridCell.swift; sourceTree = "<group>"; };
-		007C189727735140007BB1B3 /* ImageGridViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageGridViewController.swift; sourceTree = "<group>"; };
+		007C189727735140007BB1B3 /* MPHGridViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MPHGridViewController.swift; sourceTree = "<group>"; };
 		007C18A4277358CA007BB1B3 /* UIImage+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIImage+Extension.swift"; sourceTree = "<group>"; };
 		8241A3152773F87700A7F9A1 /* MPHManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MPHManager.swift; sourceTree = "<group>"; };
 		8241A3172773FCEF00A7F9A1 /* MPHNavigationController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MPHNavigationController.swift; sourceTree = "<group>"; };
 		8241A32127742E3A00A7F9A1 /* MPHAssetCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MPHAssetCell.swift; sourceTree = "<group>"; };
+		824FF8F027C5E04B00FEFD34 /* ImageViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageViewController.swift; sourceTree = "<group>"; };
 		827939442794F1830023D27C /* MPHPickerExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MPHPickerExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		827939462794F1830023D27C /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		827939482794F1830023D27C /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -114,7 +116,7 @@
 				007C188B27735098007BB1B3 /* MPHPicker.docc */,
 				007C1893277350AF007BB1B3 /* MPHGridCell.swift */,
 				82C7FEC6277581E40039A1A3 /* UICollectionView+Extension.swift */,
-				007C189727735140007BB1B3 /* ImageGridViewController.swift */,
+				007C189727735140007BB1B3 /* MPHGridViewController.swift */,
 				007C18A4277358CA007BB1B3 /* UIImage+Extension.swift */,
 				8241A3152773F87700A7F9A1 /* MPHManager.swift */,
 				8241A3172773FCEF00A7F9A1 /* MPHNavigationController.swift */,
@@ -132,6 +134,7 @@
 				8279394F2794F1840023D27C /* Assets.xcassets */,
 				827939512794F1840023D27C /* LaunchScreen.storyboard */,
 				827939542794F1840023D27C /* Info.plist */,
+				824FF8F027C5E04B00FEFD34 /* ImageViewController.swift */,
 			);
 			path = MPHPickerExample;
 			sourceTree = "<group>";
@@ -259,7 +262,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				82C7FEC7277581E40039A1A3 /* UICollectionView+Extension.swift in Sources */,
-				007C189827735140007BB1B3 /* ImageGridViewController.swift in Sources */,
+				007C189827735140007BB1B3 /* MPHGridViewController.swift in Sources */,
 				007C188C27735098007BB1B3 /* MPHPicker.docc in Sources */,
 				8241A32227742E3A00A7F9A1 /* MPHAssetCell.swift in Sources */,
 				007C1894277350AF007BB1B3 /* MPHGridCell.swift in Sources */,
@@ -275,6 +278,7 @@
 			files = (
 				8279394B2794F1830023D27C /* ViewController.swift in Sources */,
 				827939472794F1830023D27C /* AppDelegate.swift in Sources */,
+				824FF8F127C5E04B00FEFD34 /* ImageViewController.swift in Sources */,
 				827939492794F1830023D27C /* SceneDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -442,7 +446,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.6;
 				PRODUCT_BUNDLE_IDENTIFIER = papayetoo.MPHPicker;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
@@ -471,7 +475,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.6;
 				PRODUCT_BUNDLE_IDENTIFIER = papayetoo.MPHPicker;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;

@@ -21,12 +21,14 @@ class MPHAssetCell: UITableViewCell {
     
     let collectionTitleLabel: UILabel = {
         let label = UILabel()
+        label.textColor = .black
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
 
     override func awakeFromNib() {
         super.awakeFromNib()
+        self.contentView.backgroundColor = .white
         self.contentView.addSubview(collectionTitleLabel)
         self.contentView.addSubview(thumbnailImageView)
         self.setThumnailImageView()
@@ -35,6 +37,7 @@ class MPHAssetCell: UITableViewCell {
     
     required init?(coder: NSCoder) {
         super.init(coder: coder)
+        self.contentView.backgroundColor = .white
         self.contentView.addSubview(collectionTitleLabel)
         self.contentView.addSubview(thumbnailImageView)
         self.setThumnailImageView()
@@ -43,6 +46,7 @@ class MPHAssetCell: UITableViewCell {
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
+        self.contentView.backgroundColor = .white
         self.contentView.addSubview(collectionTitleLabel)
         self.contentView.addSubview(thumbnailImageView)
         self.setThumnailImageView()

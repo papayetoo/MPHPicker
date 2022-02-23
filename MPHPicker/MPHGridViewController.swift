@@ -12,9 +12,9 @@ public protocol ImageGridViewDelegate: NSObject {
     func didFillUpAssets()
 }
 
-open class ImageGridViewController: UIViewController {
+open class MPHGridViewController: UIViewController {
     
-    private let imageGridCollectionView: UICollectionView = {
+    private let gridCollectionView: UICollectionView = {
         let layout = UICollectionViewFlowLayout()
         let collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
         collectionView.backgroundColor = .white
@@ -24,12 +24,11 @@ open class ImageGridViewController: UIViewController {
     private var fetchingAssets: PHFetchResult<PHAsset>! {
         didSet {
             DispatchQueue.main.async {
-                self.imageGridCollectionView.reloadData()
+                self.gridCollectionView.reloadData()
             }
         }
     }
     
-    private let imageManager = PHCachingImageManager()
     private var previousPreaheatRect = CGRect.zero
     
     public weak var delegate: ImageGridViewDelegate?
@@ -41,16 +40,16 @@ open class ImageGridViewController: UIViewController {
         self.fetchingAssets = PHAsset.fetchAssets(with: options)
         PHPhotoLibrary.shared().register(self)
         
-        self.view.addSubview(self.imageGridCollectionView)
-        self.imageGridCollectionView.delegate = self
-        self.imageGridCollectionView.dataSource = self
-        self.imageGridCollectionView.register(MPHGridCell.self, forCellWithReuseIdentifier: MPHGridCell.cellIdentifier)
+        self.view.addSubview(self.gridCollectionView)
+        self.gridCollectionView.delegate = self
+        self.gridCollectionView.dataSource = self
+        self.gridCollectionView.register(MPHGridCell.self, forCellWithReuseIdentifier: MPHGridCell.cellIdentifier)
     }
     
     
     public override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
-        self.imageGridCollectionView.frame = self.view.frame
+        self.gridCollectionView.frame = self.view.frame
     }
     
     deinit {
@@ -59,7 +58,7 @@ open class ImageGridViewController: UIViewController {
 
 }
 
-extension ImageGridViewController: PHPhotoLibraryChangeObserver {
+extension MPHGridViewController: PHPhotoLibraryChangeObserver {
     public func photoLibraryDidChange(_ changeInstance: PHChange) {
         if let changeDetail = changeInstance.changeDetails(for: self.fetchingAssets) {
             self.fetchingAssets = changeDetail.fetchResultAfterChanges
@@ -69,26 +68,26 @@ extension ImageGridViewController: PHPhotoLibraryChangeObserver {
     fileprivate func updateCachedAssets() {
         guard isViewLoaded && view.window != nil else {return}
         
-        let visibleRect = CGRect(origin: self.imageGridCollectionView.contentOffset,
-                                 size: self.imageGridCollectionView.bounds.size)
+        let visibleRect = CGRect(origin: self.gridCollectionView.contentOffset,
+                                 size: self.gridCollectionView.bounds.size)
         let preaheatRect = visibleRect.insetBy(dx: 0, dy: -5 * visibleRect.height)
         let delta = abs(preaheatRect.midY - self.previousPreaheatRect.midY)
         guard delta > view.bounds.height / 5 else {return}
         
         let (addedRects, removedRects) = self.differencesBetweenRects(self.previousPreaheatRect, preaheatRect)
         let addAssets = addedRects
-            .flatMap {rect in imageGridCollectionView.indexPathsForElements(in: rect)}
+            .flatMap {rect in gridCollectionView.indexPathsForElements(in: rect)}
             .map {indexPath in fetchingAssets.object(at: indexPath.item)}
         let removeAssets = removedRects
-            .flatMap {rect in imageGridCollectionView.indexPathsForElements(in: rect)}
+            .flatMap {rect in gridCollectionView.indexPathsForElements(in: rect)}
             .map {indexPath in fetchingAssets.object(at: indexPath.item)}
         
         let width = self.view.frame.width / 3 - 2
         let scale = UIScreen.main.scale
         let size = CGSize(width: width * scale, height: width * scale)
         DispatchQueue.global().async {
-            self.imageManager.startCachingImages(for: addAssets, targetSize: size, contentMode: .aspectFill, options: nil)
-            self.imageManager.stopCachingImages(for: removeAssets, targetSize: size, contentMode: .aspectFill, options: nil)
+            MPHManager.shared.imageManager.startCachingImages(for: addAssets, targetSize: size, contentMode: .aspectFill, options: nil)
+            MPHManager.shared.imageManager.stopCachingImages(for: removeAssets, targetSize: size, contentMode: .aspectFill, options: nil)
         }
         
         self.previousPreaheatRect = preaheatRect
@@ -121,21 +120,21 @@ extension ImageGridViewController: PHPhotoLibraryChangeObserver {
     }
 }
 
-extension ImageGridViewController {
+extension MPHGridViewController {
     @discardableResult
-    public func setImageGridViewDelegate(_ delegate: ImageGridViewDelegate?) -> ImageGridViewController{
+    public func setImageGridViewDelegate(_ delegate: ImageGridViewDelegate?) -> MPHGridViewController{
         self.delegate = delegate
         return self
     }
 }
 
-extension ImageGridViewController: MPHNavigationDelegate {
+extension MPHGridViewController: MPHNavigationDelegate {
     func didChangeAssets(_ assets: PHFetchResult<PHAsset>?) {
         self.fetchingAssets = assets
     }
 }
 
-extension ImageGridViewController: UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout {
+extension MPHGridViewController: UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout {
     public func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: MPHGridCell.cellIdentifier, for: indexPath) as? MPHGridCell,
               let asset = self.fetchingAssets?.object(at: indexPath.item) else {
@@ -144,10 +143,10 @@ extension ImageGridViewController: UICollectionViewDataSource, UICollectionViewD
         
         let width = self.view.frame.width / 3 - 2
         let scale = UIScreen.main.scale
-        let size = CGSize(width: width * scale, height: width * scale)
+        let size = CGSize(width: CGFloat(asset.pixelWidth) * scale, height: CGFloat(asset.pixelHeight) * scale)
         cell.assetIdentifier = asset.localIdentifier
-        DispatchQueue.global().async {[weak self] in
-            self?.imageManager.requestImage(for: asset, targetSize: size, contentMode: .aspectFill, options: nil, resultHandler: {(imageOrNil, _) in
+        DispatchQueue.global().async {
+            MPHManager.shared.imageManager.requestImage(for: asset, targetSize: size, contentMode: .aspectFill, options: nil, resultHandler: {(imageOrNil, _) in
                 guard let image = imageOrNil, cell.assetIdentifier == asset.localIdentifier else {
                     return
                 }

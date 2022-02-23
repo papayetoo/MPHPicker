@@ -19,8 +19,10 @@ open class MPHManager: NSObject {
     
     @objc dynamic var selected: [String] = []
     public var selectedImageAssets: [UIImage] = []
+    var selectedAssets: [PHAsset] = []
     public static let shared = MPHManager()
     public weak var delegate: MPHManagerDelegate?
+    public let imageManager = PHCachingImageManager()
     public var maxImageCount: Int {
         get {
             Self.Config.maxImage

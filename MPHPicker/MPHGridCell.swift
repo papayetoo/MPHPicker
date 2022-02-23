@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import Photos
 
 open class MPHGridCell: UICollectionViewCell {
     
@@ -30,7 +31,7 @@ open class MPHGridCell: UICollectionViewCell {
     static let cellIdentifier = "MPHGridCell"
     
     public typealias AssetIdentifier = String
-
+    
     var assetIdentifier: AssetIdentifier? {
         didSet {
             guard let assetIdentifier = assetIdentifier,
@@ -48,7 +49,6 @@ open class MPHGridCell: UICollectionViewCell {
     
     public required init?(coder: NSCoder) {
         super.init(coder: coder)
-        dump("ImageGridCell init with coder")
         self.contentView.addSubview(self.imageView)
         self.imageView.addSubview(self.opaqueView)
         self.contentView.addSubview(self.circleButton)
@@ -56,10 +56,10 @@ open class MPHGridCell: UICollectionViewCell {
     
     public override init(frame: CGRect) {
         super.init(frame: frame)
-        dump("ImageGridCell init with frame")
         self.contentView.addSubview(self.imageView)
-        self.imageView.addSubview(self.opaqueView)
         self.contentView.addSubview(self.circleButton)
+        self.imageView.addSubview(self.opaqueView)
+        self.imageView.contentMode = .scaleAspectFill
         
         self.circleButton.addTarget(self, action: #selector(changeSelectedAssets), for: .touchUpInside )
         self.selectedObserver = MPHManager.shared.observe(\.selected, options: [.old, .new], changeHandler: {[weak self] (_, change) in

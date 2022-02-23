@@ -40,7 +40,7 @@ open class MPHNavigationController: UINavigationController {
     private lazy var imageCountButton = UIBarButtonItem(title: "0", style: .plain, target: nil, action: nil)
     private lazy var uploadButton = UIBarButtonItem(title: "올리기", style: .plain, target: self, action: #selector(didTouchUploadButton))
     
-    private var imageGridViewController: ImageGridViewController?
+    private var imageGridViewController: MPHGridViewController?
 
     private var defaultImage = UIImage()
     
@@ -68,6 +68,7 @@ open class MPHNavigationController: UINavigationController {
     
     private lazy var assetsListView: UITableView = {
         let tableView = UITableView()
+        tableView.backgroundColor = .white
         tableView.delegate = self
         tableView.dataSource = self
         tableView.register(MPHAssetCell.self, forCellReuseIdentifier: MPHAssetCell.cellIdentifier)
@@ -118,7 +119,7 @@ open class MPHNavigationController: UINavigationController {
     }
     
     public convenience init() {
-        let gridVC = ImageGridViewController()
+        let gridVC = MPHGridViewController()
         self.init(rootViewController: gridVC)
         self.mphNavigationDelegate = gridVC
         self.imageGridViewController = gridVC
